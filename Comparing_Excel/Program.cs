@@ -1,7 +1,4 @@
-﻿
-
-
-using Microsoft.Extensions.FileProviders;
+﻿using Microsoft.Extensions.FileProviders;
 using OfficeOpenXml;
 using System;
 using System.IO;
@@ -11,16 +8,47 @@ class Program
 {
     static void Main()
     {
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        string pathSheet1 = @"D:\\Excel comparision\PreviousData.xlsx"; // Replace with the actual path of your Excel files
+        // Replace with the actual path of your Excel files
         string pathSheet2 = @"D:\\Excel comparision\CurrentData.xlsx";
+        ExcelPackage package2 = ExcelCompare(pathSheet2);
+
+        string ArchivePath = @"D:\Excel comparision\ArchiveFile";
+        string fileName = Path.GetFileNameWithoutExtension(pathSheet2);
+        string fileExtension = Path.GetExtension(pathSheet2);
+        string archiveFileName = $"{fileName}_{DateTime.Now:yyyyMM}{fileExtension}";
+        string archiveFilePath = Path.Combine(ArchivePath, archiveFileName);
+        if (!Directory.Exists(ArchivePath))
+        {
+            Directory.CreateDirectory(ArchivePath);
+        }
+
+        // Copy the current data file to the archive file path
+        //File.Copy(pathSheet2, archiveFilePath);
+        Console.WriteLine("File copied successfully");
+
+        // Save the result to the archive file
+        package2.SaveAs(new FileInfo(archiveFilePath));
+
+
+
+
+        // ...
+
+
+
+    }
+
+    public static ExcelPackage ExcelCompare(string pathSheet2)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        string pathSheet1 = @"D:\\Excel comparision\PreviousData.xlsx";
         // Load the Excel files
         FileInfo fileInfo1 = new FileInfo(pathSheet1);
         FileInfo fileInfo2 = new FileInfo(pathSheet2);//load
-
+        ExcelPackage package2;
         using (var package1 = new ExcelPackage(fileInfo1))
-        using (var package2 = new ExcelPackage(fileInfo2))
         {
+            package2 = new ExcelPackage(fileInfo2);
             // Get the first worksheet from each Excel file
             var sheet1 = package1.Workbook.Worksheets[0];
             var sheet2 = package2.Workbook.Worksheets[0];
@@ -82,7 +110,7 @@ class Program
             int count = 0;
             for (int row = 2; row <= sheet2.Dimension.End.Row; row++)
             {
-                
+
                 var userId = sheet2.Cells[row, 2].Value?.ToString();
                 if (!ContainsDigits(userId))
                 {
@@ -90,23 +118,25 @@ class Program
                     sheet2.DeleteRow(row, 1);
                     count++;
                     row--;
-                    
+
                 }
-                
+
             }
             Console.WriteLine($"Number of userid's deleted are {count}");
 
 
-            // Save the result to the same Excel file (Sheet2)
+
             package2.Save();
+            return package2;
+
+
+
         }
-        
-
-
 
     }
 
-    
+
+
     private static bool ContainsDigits(string input)
     {
         return new Regex(@"\d").IsMatch(input);
@@ -119,3 +149,4 @@ class Program
 
 
 }
+
